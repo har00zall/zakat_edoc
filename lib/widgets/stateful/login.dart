@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:zakat_edoc/helpers/login_helper.dart';
+import 'package:zakat_edoc/route.dart';
+
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData.light(),
+      home: Login(),
+    );
+  }
+}
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -70,6 +84,14 @@ class _LoginState extends State<Login> {
     var loginResponse = await LoginHelper.login(username, password);
 
     showSnackbar(loginResponse.responseMessage);
+
+    await Future.delayed(Duration(milliseconds: 1500));
+
+    moveToDashboard();
+  }
+
+  void moveToDashboard() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => dashboard));
   }
 
   void showSnackbar(String message) {
