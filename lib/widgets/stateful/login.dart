@@ -26,6 +26,8 @@ class _LoginState extends State<Login> {
   var usernameFieldController = TextEditingController();
   var passwordFieldController = TextEditingController();
 
+  bool isLoggingIn = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +68,7 @@ class _LoginState extends State<Login> {
               height: 50,
               width: 550,
               child: OutlinedButton.icon(
-                onPressed: tryLogin,
+                onPressed: isLoggingIn ? null : tryLogin,
                 icon: const Icon(Icons.login),
                 label: const Text("Login"),
               ),
@@ -78,6 +80,10 @@ class _LoginState extends State<Login> {
   }
 
   void tryLogin() async {
+    setState(() {
+      isLoggingIn = true;
+    });
+
     var username = usernameFieldController.value.text;
     var password = passwordFieldController.value.text;
 
@@ -85,13 +91,21 @@ class _LoginState extends State<Login> {
 
     showSnackbar(loginResponse.responseMessage);
 
-    await Future.delayed(Duration(milliseconds: 1500));
-
-    moveToDashboard();
+    if (loginResponse.responseCode == LoginResponseCode.error) {
+      setState(() {
+        isLoggingIn = false;
+      });
+    } else {
+      await Future.delayed(Duration(milliseconds: 1500));
+      moveToDashboard();
+    }
   }
 
   void moveToDashboard() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => dashboard));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => dashboard),
+    );
   }
 
   void showSnackbar(String message) {

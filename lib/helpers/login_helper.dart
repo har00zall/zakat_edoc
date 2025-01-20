@@ -1,6 +1,7 @@
 import 'package:dargon2_flutter/dargon2_flutter.dart';
 import 'package:zakat_edoc/database/user_data.dart';
-import 'package:zakat_edoc/db_route.dart';
+import 'package:zakat_edoc/data_route.dart';
+import 'package:zakat_edoc/helpers/session_helper.dart';
 
 enum LoginResponseCode { error, success }
 
@@ -28,6 +29,8 @@ class LoginHelper {
           responseMessage: "Wrong Password");
     }
 
+    SessionHelper.addSession(
+        retrievedUserData.id.toString(), retrievedUserData);
     return const LoginResponse(
         responseCode: LoginResponseCode.success,
         responseMessage: "Succesfully Logged in");
