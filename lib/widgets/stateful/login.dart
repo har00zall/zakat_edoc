@@ -29,6 +29,13 @@ class _LoginState extends State<Login> {
   bool isLoggingIn = false;
 
   @override
+  void dispose() {
+    usernameFieldController.dispose();
+    passwordFieldController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(

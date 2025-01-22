@@ -54,7 +54,7 @@ class _DashboardState extends State<Dashboard> {
           Padding(
             padding: EdgeInsets.only(right: 15),
             child: OutlinedButton.icon(
-              onPressed: null,
+              onPressed: () {},
               label: Text(userSession.length == 0
                   ? ""
                   : userSession.getAt(0)!.userData.displayName),
@@ -109,6 +109,9 @@ class _DashboardState extends State<Dashboard> {
                   onPressed: isLoggingOut ? null : tryLogout,
                   label: Text("Log Out"),
                   icon: Icon(Icons.logout),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red[400],
+                  ),
                 ),
               ),
             ),
@@ -163,15 +166,36 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ReportCard(
               title: "Zakat Terkumpul (Uang)",
               data: "Rp. 125.000,00",
-              backgroundColor: Theme.of(context).highlightColor,
+              backgroundColor: Colors.cyan[50]!,
             ),
             ReportCard(
               title: "Zakat Terkumpul (Beras)",
               data: "12 Kg",
-              backgroundColor: Theme.of(context).hoverColor,
+              backgroundColor: Colors.teal[50]!,
             ),
           ],
-        )
+        ),
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 15),
+            child: SizedBox(
+              height: 35,
+              child: FilledButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => addMuzakki),
+                  );
+                },
+                label: Text("Tambahkan Muzakki"),
+                icon: Icon(Icons.add),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.blue[400],
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -199,6 +223,14 @@ class ReportCard extends StatelessWidget {
           borderRadius: BorderRadius.all(
             Radius.circular(15),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              offset: Offset(0, 5),
+              blurRadius: 2.5,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
