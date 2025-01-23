@@ -1,5 +1,7 @@
 import 'dart:developer';
-
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
@@ -28,6 +30,9 @@ class AddMuzakki extends StatefulWidget {
 
 class _AddMuzakkiState extends State<AddMuzakki> {
   List<MuzakkiInputController> muzakkiEntry = List.empty(growable: true);
+  List<PaintingPoint?> paintingPoints = List.empty(growable: true);
+
+  final Size canvasSize = Size(600, 450);
 
   @override
   Widget build(BuildContext context) {
@@ -55,52 +60,18 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                   },
                 );
               },
-              label: Text("Tambah Muzakki"),
-              icon: Icon(Icons.add),
+              label: Text("Print"),
+              icon: Icon(Icons.print),
             ),
           ),
         ],
       ),
-      body: Center(
-        child: FutureBuilder(
-          future: Future.delayed(
-            Duration(milliseconds: 100),
-          ),
-          builder: (context, snapshot) {
-            return ListView.builder(
-              // header: Padding(
-              //   padding: EdgeInsets.all(15),
-              //   child: Row(
-              //     spacing: 15,
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Text(
-              //         "Nama Muzakki",
-              //         style: GoogleFonts.rubik(
-              //           fontSize: 18,
-              //           fontWeight: FontWeight.bold,
-              //         ),
-              //       ),
-              //       Text(
-              //         "Tipe Zakat",
-              //         style: GoogleFonts.rubik(
-              //           fontSize: 18,
-              //           fontWeight: FontWeight.bold,
-              //         ),
-              //       ),
-              //       Text(
-              //         "Jumlah",
-              //         style: GoogleFonts.rubik(
-              //           fontSize: 18,
-              //           fontWeight: FontWeight.bold,
-              //         ),
-              //       )
-              //     ],
-              //   ),
-              // ),
-              itemCount: muzakkiEntry.length,
-              itemBuilder: (context, int index) {
+      body: ListView(
+        children: [
+          Column(
+            children: List.generate(
+              muzakkiEntry.length,
+              (index) {
                 return ListTile(
                   key: ValueKey(muzakkiEntry[index]),
                   leading: Text(
@@ -153,8 +124,13 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                           onSelected: (value) {
                             setState(
                               () {
+                                if (value == null) {
+                                  muzakkiEntry[index]
+                                      .zakatTypeFieldController
+                                      .text = "Uang";
+                                }
                                 muzakkiEntry[index].muzakkiInputData.zakatType =
-                                    value!;
+                                    value ?? ZakatType.uang;
                               },
                             );
                           },
@@ -183,23 +159,215 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                   ),
                 );
               },
-              //onReorder: (int from, int to) {},
-            );
-          },
-        ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(15),
+            child: SizedBox(
+              height: 35,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(
+                    () {
+                      muzakkiEntry.add(
+                        MuzakkiInputController(
+                          muzakkiInputData: MuzakkiInputData(),
+                          nameFieldController: TextEditingController(),
+                          zakatTypeFieldController: TextEditingController(),
+                          amountFieldController: TextEditingController(),
+                        ),
+                      );
+                    },
+                  );
+                },
+                label: Text("Tambah Muzakki"),
+                icon: Icon(Icons.add),
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              Text(
+                "Tanda Tangan Muzakki",
+                textAlign: TextAlign.left,
+              ),
+              SizedBox(
+                height: canvasSize.height,
+                width: canvasSize.width,
+                child: GestureDetector(
+                  onPanStart: (details) {
+                    setState(() {
+                      final RenderBox renderBox =
+                          context.findRenderObject() as RenderBox;
+                      final localPosition =
+                          renderBox.globalToLocal(details.globalPosition);
+                      if (localPosition.dx >= 0 &&
+                          localPosition.dx <= renderBox.size.width &&
+                          localPosition.dy >= 0 &&
+                          localPosition.dy <= renderBox.size.height) {
+                        paintingPoints.add(
+                          PaintingPoint(
+                            offset: details.localPosition,
+                            paint: Paint()
+                              ..color = Colors.black
+                              ..isAntiAlias = true
+                              ..strokeWidth = 5
+                              ..strokeCap = StrokeCap.round,
+                          ),
+                        );
+                      }
+                    });
+                  },
+                  onPanUpdate: (details) {
+                    setState(() {
+                      paintingPoints.add(
+                        PaintingPoint(
+                          offset: details.localPosition,
+                          paint: Paint()
+                            ..color = Colors.black
+                            ..isAntiAlias = true
+                            ..strokeWidth = 5
+                            ..strokeCap = StrokeCap.round,
+                        ),
+                      );
+                    });
+                  },
+                  onPanEnd: (details) {
+                    setState(() {
+                      paintingPoints.add(null);
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black45),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: RepaintBoundary(
+                      child: CustomPaint(
+                        size: canvasSize,
+                        painter:
+                            SignaturePainter(paintingPoints: paintingPoints),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(15),
+                child: Row(
+                  spacing: 15,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          clearSign();
+                        },
+                        label: Text("Clear"),
+                        icon: Icon(Icons.save),
+                      ),
+                    ),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          openFileExplorer();
+                        },
+                        label: Text("Save Sign To File"),
+                        icon: Icon(Icons.save),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   void removeEntry(int index) {
     // Remove the item from the list
-    Future.microtask(() {
-      setState(() {
-        var removedMuzakkiDataController = muzakkiEntry.removeAt(index);
-        removedMuzakkiDataController.nameFieldController.dispose();
-        removedMuzakkiDataController.zakatTypeFieldController.dispose();
-        removedMuzakkiDataController.amountFieldController.dispose();
-      });
+    setState(() {
+      var removedMuzakkiDataController = muzakkiEntry.removeAt(index);
+      removedMuzakkiDataController.nameFieldController.dispose();
+      removedMuzakkiDataController.zakatTypeFieldController.dispose();
+      removedMuzakkiDataController.amountFieldController.dispose();
     });
   }
+
+  void clearSign() {
+    setState(() {
+      paintingPoints.clear();
+    });
+  }
+
+  Future<void> saveToFile({String customPath = ""}) async {
+    if (customPath.isEmpty) {
+      customPath = "${Directory.systemTemp.path}/image.png";
+    }
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    final size = canvasSize;
+    final painter = SignaturePainter(paintingPoints: paintingPoints);
+    painter.paint(canvas, size);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(size.width.toInt(), size.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    if (byteData != null) {
+      final buffer = byteData.buffer.asUint8List();
+      final filePath = customPath;
+      await File(filePath).writeAsBytes(buffer);
+      log("File saved at: $filePath");
+    }
+  }
+
+  Future<void> openFileExplorer() async {
+    String? outputFile = await FilePicker.platform.saveFile(
+      dialogTitle: 'Please select an output file:',
+      fileName: 'sign.png',
+    );
+
+    if (outputFile != null) {
+      await saveToFile(customPath: outputFile);
+    }
+  }
+}
+
+class SignaturePainter extends CustomPainter {
+  SignaturePainter({required this.paintingPoints});
+
+  final List<PaintingPoint?> paintingPoints;
+  late List<Offset> offsets = List.empty(growable: true);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int i = 0; i < paintingPoints.length - 1; i++) {
+      if (paintingPoints[i] != null && paintingPoints[i + 1] != null) {
+        canvas.drawLine(paintingPoints[i]!.offset,
+            paintingPoints[i + 1]!.offset, paintingPoints[i]!.paint);
+      } else if (paintingPoints[i] != null && paintingPoints[i + 1] == null) {
+        offsets.clear();
+        offsets.add(paintingPoints[i]!.offset);
+
+        canvas.drawPoints(
+            ui.PointMode.points, offsets, paintingPoints[i]!.paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+}
+
+class PaintingPoint {
+  PaintingPoint({required this.offset, required this.paint});
+
+  final Offset offset;
+  final Paint paint;
 }
