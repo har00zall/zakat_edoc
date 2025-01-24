@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
+import 'package:zakat_edoc/widgets/stateful/printing.dart';
 
 class MuzakkiInputController {
   const MuzakkiInputController({
@@ -29,8 +30,8 @@ class AddMuzakki extends StatefulWidget {
 }
 
 class _AddMuzakkiState extends State<AddMuzakki> {
-  List<MuzakkiInputController> muzakkiEntry = List.empty(growable: true);
-  List<PaintingPoint?> paintingPoints = List.empty(growable: true);
+  List<MuzakkiInputController> muzakkiEntry = [];
+  List<PaintingPoint?> paintingPoints = [];
 
   final Size canvasSize = Size(600, 450);
 
@@ -46,19 +47,8 @@ class _AddMuzakkiState extends State<AddMuzakki> {
           Padding(
             padding: EdgeInsets.only(right: 15),
             child: OutlinedButton.icon(
-              onPressed: () {
-                setState(
-                  () {
-                    muzakkiEntry.add(
-                      MuzakkiInputController(
-                        muzakkiInputData: MuzakkiInputData(),
-                        nameFieldController: TextEditingController(),
-                        zakatTypeFieldController: TextEditingController(),
-                        amountFieldController: TextEditingController(),
-                      ),
-                    );
-                  },
-                );
+              onPressed: () async {
+                await printReceipt();
               },
               label: Text("Print"),
               icon: Icon(Icons.print),
@@ -80,8 +70,8 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                   ),
                   tileColor: index.isOdd ? Colors.black12 : Colors.white,
                   trailing: IconButton.outlined(
-                    onPressed: () {
-                      removeEntry(index);
+                    onPressed: () async {
+                      await removeEntry(index);
                     },
                     icon: Icon(Icons.delete),
                   ),
@@ -268,8 +258,8 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                     ),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () {
-                          openFileExplorer();
+                        onPressed: () async {
+                          await openFileExplorer();
                         },
                         label: Text("Save Sign To File"),
                         icon: Icon(Icons.save),
@@ -285,19 +275,38 @@ class _AddMuzakkiState extends State<AddMuzakki> {
     );
   }
 
-  void removeEntry(int index) {
-    // Remove the item from the list
-    setState(() {
-      var removedMuzakkiDataController = muzakkiEntry.removeAt(index);
-      removedMuzakkiDataController.nameFieldController.dispose();
-      removedMuzakkiDataController.zakatTypeFieldController.dispose();
-      removedMuzakkiDataController.amountFieldController.dispose();
-    });
-  }
-
   void clearSign() {
     setState(() {
       paintingPoints.clear();
+    });
+  }
+
+  Future<void> printReceipt() async {
+    List<MuzakkiInputData> muzakkiInputData = [];
+    for (int i = 0; i < muzakkiEntry.length; i++) {
+      muzakkiInputData.add(muzakkiEntry[i].muzakkiInputData);
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return Printing(
+            muzakkiData: muzakkiInputData,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> removeEntry(int index) async {
+    // Remove the item from the list
+    setState(() {
+      // var removedMuzakkiDataController =
+      muzakkiEntry.removeAt(index);
+      // removedMuzakkiDataController.nameFieldController.dispose();
+      // removedMuzakkiDataController.zakatTypeFieldController.dispose();
+      // removedMuzakkiDataController.amountFieldController.dispose();
     });
   }
 
