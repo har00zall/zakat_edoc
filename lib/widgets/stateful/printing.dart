@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pdf/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
@@ -70,12 +69,18 @@ class _PrintingState extends State<Printing> {
               return pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(muzakkiData.name),
-                  pw.Text(muzakkiData.zakatType == ZakatType.uang
-                      ? 'Uang'
-                      : 'Beras'),
-                  pw.Text(
-                      "${muzakkiData.zakatType == ZakatType.uang ? 'Rp.' : ''} ${muzakkiData.amount} ${muzakkiData.zakatType == ZakatType.beras ? 'Kg' : ''}"),
+                  pw.Expanded(
+                    child: pw.Text(muzakkiData.name),
+                  ),
+                  pw.Expanded(
+                    child: pw.Text(muzakkiData.zakatType == ZakatType.uang
+                        ? 'Uang'
+                        : 'Beras'),
+                  ),
+                  pw.Expanded(
+                    child: pw.Text(
+                        "${muzakkiData.zakatType == ZakatType.uang ? 'Rp.' : ''} ${muzakkiData.amount} ${muzakkiData.zakatType == ZakatType.beras ? 'Kg' : ''}"),
+                  ),
                 ],
               );
             },
