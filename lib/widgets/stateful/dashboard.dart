@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zakat_edoc/data_route.dart';
+import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:zakat_edoc/helpers/logout_helper.dart';
 import 'package:zakat_edoc/route.dart';
 
@@ -15,18 +16,9 @@ class _DashboardState extends State<Dashboard> {
   bool isLoggingOut = false;
   int _selectedIndex = 0;
 
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static const List<Widget> _widgetOptions = <Widget>[
     HomeDashboard(),
-    Text(
-      'Index 1: Business',
-      style: optionStyle,
-    ),
-    Text(
-      'Index 2: School',
-      style: optionStyle,
-    ),
+    AdminSettings(),
   ];
 
   void _onItemTapped(int index) {
@@ -54,7 +46,9 @@ class _DashboardState extends State<Dashboard> {
           Padding(
             padding: EdgeInsets.only(right: 15),
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                _onItemTapped(1);
+              },
               label: Text(userSession.length == 0
                   ? ""
                   : userSession.getAt(0)!.userData.displayName),
@@ -86,18 +80,10 @@ class _DashboardState extends State<Dashboard> {
               },
             ),
             ListTile(
-              title: const Text('Business'),
+              title: const Text('Admin Settings'),
               selected: _selectedIndex == 1,
               onTap: () {
                 _onItemTapped(1);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('School'),
-              selected: _selectedIndex == 2,
-              onTap: () {
-                _onItemTapped(2);
                 Navigator.pop(context);
               },
             ),
@@ -181,8 +167,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
             child: SizedBox(
               height: 35,
               child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => addMuzakki),
                   );
@@ -196,8 +182,168 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ),
         ),
+        SizedBox(
+          height: 50,
+        ),
+        Table(
+          defaultColumnWidth: FixedColumnWidth(300),
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey[200]),
+              children: [
+                TableHeader(title: "No."),
+                TableHeader(title: "Muzakki"),
+                TableHeader(title: "Jenis Zakat"),
+                TableHeader(title: "Jumlah")
+              ],
+            ),
+            ...List<TableRow>.generate(
+              muzakkiData.length,
+              (index) {
+                return TableRow(
+                  decoration: BoxDecoration(
+                      color: index % 2 == 0 ? Colors.white : Colors.grey[200]),
+                  children: [
+                    TableRowTextChild(title: (index + 1).toString()),
+                    TableRowTextChild(title: muzakkiData.getAt(index)!.name),
+                    TableRowTextChild(
+                        title: muzakkiData.getAt(index)!.zakatType.toString()),
+                    TableRowTextChild(
+                        title:
+                            "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${muzakkiData.getAt(index)!.amount} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}"),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ],
     );
+  }
+}
+
+class AdminSettings extends StatefulWidget {
+  const AdminSettings({super.key});
+
+  @override
+  State<AdminSettings> createState() => _AdminSettingsState();
+}
+
+class _AdminSettingsState extends State<AdminSettings> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 5),
+            child: Text(
+              "Admin Settings",
+              style: GoogleFonts.rubik(
+                fontWeight: FontWeight.bold,
+                fontSize: 23,
+              ),
+            ),
+          ),
+        ),
+        Table(
+          children: [
+            TableRow(
+              children: tableHeader(
+                ["Ketua BKM", "Ketua 'Amil", "Sekretaris"],
+              ),
+            ),
+            TableRow(
+              children: tableTextFieldItem(
+                ["Ketua BKM", "Ketua 'Amil", "Sekretaris"],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 45,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
+            child: FilledButton.icon(
+              onPressed: () {},
+              label: Text("Simpan"),
+              icon: Icon(Icons.save),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> tableHeader(List<String> headerTitle) {
+    return List.generate(headerTitle.length, (index) {
+      return TableHeader(title: headerTitle[index]);
+    });
+  }
+
+  List<Widget> tableTextFieldItem(List<String> placeholders) {
+    return List.generate(placeholders.length, (index) {
+      return TableRowChild(placeholder: placeholders[index]);
+    });
+  }
+}
+
+class TableHeader extends StatelessWidget {
+  const TableHeader({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 15),
+      child: Text(
+        title,
+        style: GoogleFonts.rubik(
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
+    ));
+  }
+}
+
+class TableRowChild extends StatelessWidget {
+  const TableRowChild({super.key, required this.placeholder});
+
+  final String placeholder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: placeholder,
+        ),
+      ),
+    );
+  }
+}
+
+class TableRowTextChild extends StatelessWidget {
+  const TableRowTextChild({super.key, required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 10),
+      child: Text(
+        title,
+        style: GoogleFonts.rubik(
+          fontSize: 13,
+        ),
+      ),
+    ));
   }
 }
 

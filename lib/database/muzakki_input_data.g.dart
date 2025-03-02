@@ -44,3 +44,42 @@ class MuzakkiInputDataAdapter extends TypeAdapter<MuzakkiInputData> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+class ZakatTypeAdapter extends TypeAdapter<ZakatType> {
+  @override
+  final int typeId = 4;
+
+  @override
+  ZakatType read(BinaryReader reader) {
+    switch (reader.readByte()) {
+      case 0:
+        return ZakatType.uang;
+      case 1:
+        return ZakatType.beras;
+      default:
+        return ZakatType.uang;
+    }
+  }
+
+  @override
+  void write(BinaryWriter writer, ZakatType obj) {
+    switch (obj) {
+      case ZakatType.uang:
+        writer.writeByte(0);
+        break;
+      case ZakatType.beras:
+        writer.writeByte(1);
+        break;
+    }
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ZakatTypeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}

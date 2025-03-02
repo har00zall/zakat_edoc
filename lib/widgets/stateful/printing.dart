@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:zakat_edoc/data_route.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -23,6 +24,13 @@ class _PrintingState extends State<Printing> {
       ),
       body: PdfPreview(
         build: (format) => generatePDF(format, widget.muzakkiData),
+        onPrinted: (context) {
+          for (var data in widget.muzakkiData) {
+            // print(
+            //     "Name: ${data.name}\nType: ${data.zakatType}\nAmount: ${data.amount}");
+            muzakkiData.add(data);
+          }
+        },
       ),
     );
   }

@@ -2,7 +2,13 @@ import 'package:hive/hive.dart';
 
 part 'muzakki_input_data.g.dart';
 
-enum ZakatType { uang, beras }
+@HiveType(typeId: 4)
+enum ZakatType {
+  @HiveField(0)
+  uang,
+  @HiveField(1)
+  beras
+}
 
 @HiveType(typeId: 2)
 class MuzakkiInputData {
