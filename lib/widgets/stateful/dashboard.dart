@@ -189,94 +189,150 @@ class _HomeDashboardState extends State<HomeDashboard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Padding(
-              padding: EdgeInsets.all(25),
-              child: IconButton(
-                onPressed: () {
-                  setState(() {});
-                },
-                icon: Icon(Icons.replay_outlined),
-              ),
+            IconButton(
+              onPressed: () {
+                setState(() {});
+              },
+              icon: Icon(Icons.replay_outlined),
             ),
-            Padding(
-              padding: EdgeInsets.all(25),
-              child: PopupMenuButton(
-                onSelected: (value) {
-                  if (value == 0) {
-                    showDialog(
-                      context: context,
-                      builder: (v) {
-                        return AlertDialog(
-                          icon: Icon(Icons.delete),
-                          title: Text(
-                              "Are you sure want to delete all entry ?\nThis action can't be undone"),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: Text("Cancel"),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                await muzakkiData.clear();
-                                setState(() {});
-                              },
-                              child: Text(
-                                "Confirm",
-                                style: TextStyle(
-                                  color: Colors.red,
-                                ),
+            PopupMenuButton(
+              onSelected: (value) {
+                if (value == 0) {
+                  showDialog(
+                    context: context,
+                    builder: (v) {
+                      return AlertDialog(
+                        icon: Icon(Icons.delete),
+                        title: Text(
+                            "Are you sure want to delete all entry ?\nThis action can't be undone"),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              Navigator.pop(context);
+                              await muzakkiData.clear();
+                              setState(() {});
+                            },
+                            child: Text(
+                              "Confirm",
+                              style: TextStyle(
+                                color: Colors.red,
                               ),
                             ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                },
-                itemBuilder: (v) => [
-                  PopupMenuItem(
-                    value: 0,
-                    child: Text("Delete All"),
-                  ),
-                ],
-              ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
+              },
+              itemBuilder: (v) => [
+                PopupMenuItem(
+                  value: 0,
+                  child: Text("Delete All"),
+                ),
+              ],
             ),
           ],
         ),
-        Table(
-          defaultColumnWidth: FixedColumnWidth(300),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            TableRow(
-              decoration: BoxDecoration(color: Colors.grey[200]),
-              children: [
-                TableHeader(title: "No."),
-                TableHeader(title: "Muzakki"),
-                TableHeader(title: "Jenis Zakat"),
-                TableHeader(title: "Jumlah")
-              ],
-            ),
-            ...List<TableRow>.generate(
-              muzakkiData.length,
-              (index) {
-                return TableRow(
-                  decoration: BoxDecoration(
-                      color: index % 2 == 0 ? Colors.white : Colors.grey[200]),
-                  children: [
-                    TableRowTextChild(title: (index + 1).toString()),
-                    TableRowTextChild(title: muzakkiData.getAt(index)!.name),
-                    TableRowTextChild(
-                        title: muzakkiData.getAt(index)!.zakatType.toString()),
-                    TableRowTextChild(
-                        title:
-                            "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${muzakkiData.getAt(index)!.amount} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}"),
-                  ],
-                );
-              },
-            ),
+            TableHeader(title: "No."),
+            TableHeader(title: "Muzakki"),
+            TableHeader(title: "Jenis Zakat"),
+            TableHeader(title: "Jumlah"),
+            TableHeader(title: "Action"),
           ],
+        ),
+        SizedBox(
+          height: 720,
+          child: ListView(
+            //defaultColumnWidth: FlexColumnWidth(1),
+            children: [
+              ...List.generate(
+                muzakkiData.length,
+                (index) {
+                  return Container(
+                    decoration: BoxDecoration(
+                        color:
+                            index % 2 == 0 ? Colors.white : Colors.grey[200]),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        TableRowTextChild(title: (index + 1).toString()),
+                        TableRowTextChild(
+                            title: muzakkiData.getAt(index)!.name),
+                        TableRowTextChild(
+                            title:
+                                muzakkiData.getAt(index)!.zakatType.toString()),
+                        TableRowTextChild(
+                          title:
+                              "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${muzakkiData.getAt(index)!.amount} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}",
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(25),
+                          child: PopupMenuButton(
+                            onSelected: (value) {
+                              if (value == 0) {
+                                showDialog(
+                                  context: context,
+                                  builder: (v) {
+                                    return AlertDialog(
+                                      icon: Icon(Icons.delete),
+                                      title: Text(
+                                          "Are you sure want to delete selected entry ?\nThis action can't be undone"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () async {
+                                            Navigator.pop(context);
+
+                                            await muzakkiData.deleteAt(index);
+
+                                            setState(() {});
+                                          },
+                                          child: Text(
+                                            "Confirm",
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            },
+                            itemBuilder: (v) => [
+                              PopupMenuItem(
+                                value: 0,
+                                child: ListTile(
+                                  leading: Icon(Icons.delete),
+                                  title: Text("Delete"),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
