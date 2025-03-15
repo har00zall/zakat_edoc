@@ -138,6 +138,7 @@ class HomeDashboard extends StatefulWidget {
 class _HomeDashboardState extends State<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
+    // print("Route name: ${ModalRoute.of(context)?.settings.name}");
     return ListView(
       padding: EdgeInsets.all(15),
       children: [
@@ -184,6 +185,66 @@ class _HomeDashboardState extends State<HomeDashboard> {
         ),
         SizedBox(
           height: 50,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(25),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {});
+                },
+                icon: Icon(Icons.replay_outlined),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(25),
+              child: PopupMenuButton(
+                onSelected: (value) {
+                  if (value == 0) {
+                    showDialog(
+                      context: context,
+                      builder: (v) {
+                        return AlertDialog(
+                          icon: Icon(Icons.delete),
+                          title: Text(
+                              "Are you sure want to delete all entry ?\nThis action can't be undone"),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                await muzakkiData.clear();
+                                setState(() {});
+                              },
+                              child: Text(
+                                "Confirm",
+                                style: TextStyle(
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                itemBuilder: (v) => [
+                  PopupMenuItem(
+                    value: 0,
+                    child: Text("Delete All"),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         Table(
           defaultColumnWidth: FixedColumnWidth(300),

@@ -30,6 +30,21 @@ class _PrintingState extends State<Printing> {
             //     "Name: ${data.name}\nType: ${data.zakatType}\nAmount: ${data.amount}");
             muzakkiData.add(data);
           }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Muzakki baru telah dimasukkan ke dalam list"),
+              action: SnackBarAction(
+                label: "Kembali Ke Dashboard",
+                onPressed: () {
+                  Navigator.popUntil(
+                    context,
+                    ModalRoute.withName("/"),
+                  );
+                },
+              ),
+            ),
+          );
         },
       ),
     );
