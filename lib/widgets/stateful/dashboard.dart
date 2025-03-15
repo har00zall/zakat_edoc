@@ -513,7 +513,7 @@ class _AdminSettingsState extends State<AdminSettings> {
                   await authorityData.clear();
                 }
 
-                var savePath = "${Directory.current.path}/Signatures/";
+                var savePath = "${Directory.current.path}/Signatures";
                 var ketuaBKMSignDir = "$savePath/ketuaBKMSign.png";
                 var ketuaAmilSignDir = "$savePath/ketuaAmilSign.png";
                 var sekretarisSignDir = "$savePath/sekretarisSign.png";
