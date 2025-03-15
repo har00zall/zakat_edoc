@@ -19,19 +19,28 @@ class AuthorityDataAdapter extends TypeAdapter<AuthorityData> {
     return AuthorityData()
       ..ketuaBKM = fields[0] as String
       ..ketuaAmil = fields[1] as String
-      ..sekretaris = fields[2] as String;
+      ..sekretaris = fields[2] as String
+      ..ketuaBKMSign = fields[3] as String
+      ..ketuaAmilSign = fields[4] as String
+      ..sekretarisSign = fields[5] as String;
   }
 
   @override
   void write(BinaryWriter writer, AuthorityData obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.ketuaBKM)
       ..writeByte(1)
       ..write(obj.ketuaAmil)
       ..writeByte(2)
-      ..write(obj.sekretaris);
+      ..write(obj.sekretaris)
+      ..writeByte(3)
+      ..write(obj.ketuaBKMSign)
+      ..writeByte(4)
+      ..write(obj.ketuaAmilSign)
+      ..writeByte(5)
+      ..write(obj.sekretarisSign);
   }
 
   @override

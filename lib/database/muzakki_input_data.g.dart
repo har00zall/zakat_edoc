@@ -16,22 +16,26 @@ class MuzakkiInputDataAdapter extends TypeAdapter<MuzakkiInputData> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return MuzakkiInputData()
-      ..name = fields[0] as String
-      ..zakatType = fields[1] as ZakatType
-      ..amount = fields[2] as String;
+    return MuzakkiInputData(
+      name: fields[0] as String,
+      zakatType: fields[1] as ZakatType,
+      amount: fields[2] as String,
+      group: fields[3] as String,
+    );
   }
 
   @override
   void write(BinaryWriter writer, MuzakkiInputData obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
       ..write(obj.zakatType)
       ..writeByte(2)
-      ..write(obj.amount);
+      ..write(obj.amount)
+      ..writeByte(3)
+      ..write(obj.group);
   }
 
   @override

@@ -1,10 +1,12 @@
-import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:zakat_edoc/data_route.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
+import 'package:zakat_edoc/helpers/signature_painter.dart';
 import 'package:zakat_edoc/widgets/stateful/printing.dart';
 
 class MuzakkiInputController {
@@ -35,6 +37,16 @@ class _AddMuzakkiState extends State<AddMuzakki> {
 
   final Size canvasSize = Size(600, 450);
 
+  late String groupName;
+
+  bool saved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    groupName = generateRandomString(16);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,9 +60,9 @@ class _AddMuzakkiState extends State<AddMuzakki> {
             padding: EdgeInsets.only(right: 15),
             child: OutlinedButton.icon(
               onPressed: () async {
-                await printReceipt();
+                await saveAndPrintReceipt();
               },
-              label: Text("Print"),
+              label: Text("Save & Print"),
               icon: Icon(Icons.print),
             ),
           ),
@@ -91,6 +103,7 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                           onChanged: (value) {
                             setState(
                               () {
+                                onChange();
                                 muzakkiEntry[index].muzakkiInputData.name =
                                     value;
                               },
@@ -114,6 +127,7 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                           onSelected: (value) {
                             setState(
                               () {
+                                onChange();
                                 if (value == null) {
                                   muzakkiEntry[index]
                                       .zakatTypeFieldController
@@ -138,8 +152,9 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                           onChanged: (value) {
                             setState(
                               () {
+                                onChange();
                                 muzakkiEntry[index].muzakkiInputData.amount =
-                                    value;
+                                    value.replaceAll(RegExp(r','), '');
                               },
                             );
                           },
@@ -161,7 +176,13 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                     () {
                       muzakkiEntry.add(
                         MuzakkiInputController(
-                          muzakkiInputData: MuzakkiInputData(),
+                          muzakkiInputData: MuzakkiInputData(
+                              name: "",
+                              zakatType: ZakatType.uang,
+                              amount: "",
+                              group: muzakkiEntry.isNotEmpty
+                                  ? muzakkiEntry[0].muzakkiInputData.name
+                                  : ""),
                           nameFieldController: TextEditingController(),
                           zakatTypeFieldController: TextEditingController(),
                           amountFieldController: TextEditingController(),
@@ -259,7 +280,9 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () async {
-                          await openFileExplorer();
+                          await saveToFile(
+                              customPath:
+                                  "${Directory.current.path}/Signatures/$groupName.png");
                         },
                         label: Text("Save Sign To File"),
                         icon: Icon(Icons.save),
@@ -281,22 +304,67 @@ class _AddMuzakkiState extends State<AddMuzakki> {
     });
   }
 
-  Future<void> printReceipt() async {
+  void onChange() {
+    saved = false;
+  }
+
+  String generateRandomString(int length) {
+    const characters =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random random = Random.secure();
+    return String.fromCharCodes(Iterable.generate(length,
+        (_) => characters.codeUnitAt(random.nextInt(characters.length))));
+  }
+
+  Future<void> saveAndPrintReceipt() async {
+    await saveToFile(
+        customPath: "${Directory.current.path}/Signatures//$groupName.png");
+
     List<MuzakkiInputData> muzakkiInputData = [];
     for (int i = 0; i < muzakkiEntry.length; i++) {
       muzakkiInputData.add(muzakkiEntry[i].muzakkiInputData);
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) {
-          return Printing(
-            muzakkiData: muzakkiInputData,
-          );
-        },
-      ),
-    );
+    if (saved == false) {
+      var keysToDelete = [];
+      var muzakkiMapData = muzakkiData.toMap();
+      muzakkiMapData.forEach((k, v) {
+        if (v.group == groupName) {
+          keysToDelete.add(k);
+        }
+      });
+      await muzakkiData.deleteAll(keysToDelete);
+
+      for (var data in muzakkiInputData) {
+        // print(
+        //     "Name: ${data.name}\nType: ${data.zakatType}\nAmount: ${data.amount}");
+        data.group = groupName;
+        muzakkiData.add(data);
+      }
+
+      setState(() {
+        saved = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Muzakki baru telah dimasukkan ke dalam list"),
+        ),
+      );
+    }
+
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return Printing(
+              muzakkiData: muzakkiInputData,
+            );
+          },
+        ),
+      );
+    }
   }
 
   Future<void> removeEntry(int index) async {
@@ -330,7 +398,6 @@ class _AddMuzakkiState extends State<AddMuzakki> {
       final buffer = byteData.buffer.asUint8List();
       final filePath = customPath;
       await File(filePath).writeAsBytes(buffer);
-      log("File saved at: $filePath");
     }
   }
 
@@ -344,39 +411,4 @@ class _AddMuzakkiState extends State<AddMuzakki> {
       await saveToFile(customPath: outputFile);
     }
   }
-}
-
-class SignaturePainter extends CustomPainter {
-  SignaturePainter({required this.paintingPoints});
-
-  final List<PaintingPoint?> paintingPoints;
-  late List<Offset> offsets = List.empty(growable: true);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < paintingPoints.length - 1; i++) {
-      if (paintingPoints[i] != null && paintingPoints[i + 1] != null) {
-        canvas.drawLine(paintingPoints[i]!.offset,
-            paintingPoints[i + 1]!.offset, paintingPoints[i]!.paint);
-      } else if (paintingPoints[i] != null && paintingPoints[i + 1] == null) {
-        offsets.clear();
-        offsets.add(paintingPoints[i]!.offset);
-
-        canvas.drawPoints(
-            ui.PointMode.points, offsets, paintingPoints[i]!.paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
-  }
-}
-
-class PaintingPoint {
-  PaintingPoint({required this.offset, required this.paint});
-
-  final Offset offset;
-  final Paint paint;
 }

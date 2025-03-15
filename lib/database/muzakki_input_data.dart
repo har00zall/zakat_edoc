@@ -12,12 +12,17 @@ enum ZakatType {
 
 @HiveType(typeId: 2)
 class MuzakkiInputData {
+  MuzakkiInputData({required this.name, required this.zakatType, required this.amount, required this.group});
+
   @HiveField(0)
-  late String name;
+  String name;
 
   @HiveField(1)
-  late ZakatType zakatType = ZakatType.uang;
+  ZakatType zakatType = ZakatType.uang;
 
   @HiveField(2)
-  late String amount;
+  String amount;
+
+  @HiveField(3)
+  String group;
 }

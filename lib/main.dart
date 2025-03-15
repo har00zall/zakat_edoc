@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dargon2_flutter/dargon2_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:zakat_edoc/data_route.dart';
@@ -11,7 +13,17 @@ void main() async {
 
   await initHive();
 
+  await initDirectories();
+
   runApp(app);
+}
+
+Future<void> initDirectories() async {
+  final signatureDir = Directory("${Directory.current.path}/Signatures/");
+
+  if (await signatureDir.exists() == false) {
+    await signatureDir.create();
+  }
 }
 
 class MyApp extends StatelessWidget {

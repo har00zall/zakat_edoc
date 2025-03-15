@@ -1,9 +1,16 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:zakat_edoc/data_route.dart';
+import 'package:zakat_edoc/database/authority_data.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:zakat_edoc/helpers/logout_helper.dart';
+import 'package:zakat_edoc/helpers/signature_painter.dart';
 import 'package:zakat_edoc/route.dart';
+import 'package:zakat_edoc/widgets/stateful/printing.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -139,6 +146,20 @@ class _HomeDashboardState extends State<HomeDashboard> {
   @override
   Widget build(BuildContext context) {
     // print("Route name: ${ModalRoute.of(context)?.settings.name}");
+    double totalZakatUang = 0;
+    double totalZakatBeras = 0;
+    int totalMuzakki = muzakkiData.length;
+
+    for (var muzakki in muzakkiData.values) {
+      double amount = double.parse(muzakki.amount);
+
+      if (muzakki.zakatType == ZakatType.beras) {
+        totalZakatBeras += amount;
+      } else {
+        totalZakatUang += amount;
+      }
+    }
+
     return ListView(
       padding: EdgeInsets.all(15),
       children: [
@@ -147,17 +168,17 @@ class _HomeDashboardState extends State<HomeDashboard> {
           children: [
             ReportCard(
               title: "Total Muzakki",
-              data: "15",
+              data: totalMuzakki.toString(),
               backgroundColor: Theme.of(context).primaryColorLight,
             ),
             ReportCard(
               title: "Zakat Terkumpul (Uang)",
-              data: "Rp. 125.000,00",
+              data: "Rp. ${NumberFormat('#,##0.00').format(totalZakatUang)}",
               backgroundColor: Colors.cyan[50]!,
             ),
             ReportCard(
               title: "Zakat Terkumpul (Beras)",
-              data: "12 Kg",
+              data: "${NumberFormat('#,##0.00').format(totalZakatBeras)} Kg",
               backgroundColor: Colors.teal[50]!,
             ),
           ],
@@ -241,13 +262,12 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ],
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            TableHeader(title: "No."),
-            TableHeader(title: "Muzakki"),
-            TableHeader(title: "Jenis Zakat"),
-            TableHeader(title: "Jumlah"),
-            TableHeader(title: "Action"),
+            Expanded(flex: 1, child: TableHeader(title: "No.")),
+            Expanded(flex: 5, child: TableHeader(title: "Muzakki")),
+            Expanded(flex: 3, child: TableHeader(title: "Jenis Zakat")),
+            Expanded(flex: 3, child: TableHeader(title: "Jumlah")),
+            Expanded(flex: 1, child: TableHeader(title: "Action")),
           ],
         ),
         SizedBox(
@@ -258,6 +278,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
               ...List.generate(
                 muzakkiData.length,
                 (index) {
+                  double zakatAmount =
+                      double.parse(muzakkiData.getAt(index)!.amount);
                   return Container(
                     decoration: BoxDecoration(
                         color:
@@ -265,65 +287,107 @@ class _HomeDashboardState extends State<HomeDashboard> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        TableRowTextChild(title: (index + 1).toString()),
-                        TableRowTextChild(
-                            title: muzakkiData.getAt(index)!.name),
-                        TableRowTextChild(
-                            title:
-                                muzakkiData.getAt(index)!.zakatType.toString()),
-                        TableRowTextChild(
-                          title:
-                              "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${muzakkiData.getAt(index)!.amount} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}",
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(25),
-                          child: PopupMenuButton(
-                            onSelected: (value) {
-                              if (value == 0) {
-                                showDialog(
-                                  context: context,
-                                  builder: (v) {
-                                    return AlertDialog(
-                                      icon: Icon(Icons.delete),
-                                      title: Text(
-                                          "Are you sure want to delete selected entry ?\nThis action can't be undone"),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text("Cancel"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () async {
-                                            Navigator.pop(context);
+                        Expanded(
+                            flex: 1,
+                            child: TableRowTextChild(
+                                title: (index + 1).toString())),
+                        Expanded(
+                            flex: 5,
+                            child: TableRowTextChild(
+                                title: muzakkiData.getAt(index)!.name)),
+                        Expanded(
+                            flex: 3,
+                            child: TableRowTextChild(
+                                title: muzakkiData.getAt(index)!.zakatType ==
+                                        ZakatType.uang
+                                    ? "Uang"
+                                    : "Beras")),
+                        Expanded(
+                            flex: 3,
+                            child: TableRowTextChild(
+                              title:
+                                  "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${NumberFormat('#,##0.00').format(zakatAmount)} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}",
+                            )),
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: EdgeInsets.all(25),
+                            child: PopupMenuButton(
+                              onSelected: (value) {
+                                if (value == 0) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (v) {
+                                      return AlertDialog(
+                                        icon: Icon(Icons.delete),
+                                        title: Text(
+                                            "Are you sure want to delete selected entry ?\nThis action can't be undone"),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              Navigator.pop(context);
 
-                                            await muzakkiData.deleteAt(index);
+                                              await muzakkiData.deleteAt(index);
 
-                                            setState(() {});
-                                          },
-                                          child: Text(
-                                            "Confirm",
-                                            style: TextStyle(
-                                              color: Colors.red,
+                                              setState(() {});
+                                            },
+                                            child: Text(
+                                              "Confirm",
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                            },
-                            itemBuilder: (v) => [
-                              PopupMenuItem(
-                                value: 0,
-                                child: ListTile(
-                                  leading: Icon(Icons.delete),
-                                  title: Text("Delete"),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                } else if (value == 1) {
+                                  var groupID = muzakkiData.getAt(index)?.group;
+                                  List<MuzakkiInputData> muzakkiDataToPrint =
+                                      [];
+
+                                  for (var muzakki in muzakkiData.values) {
+                                    if (muzakki.group == groupID) {
+                                      muzakkiDataToPrint.add(muzakki);
+                                    }
+                                  }
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) {
+                                        return Printing(
+                                          muzakkiData: muzakkiDataToPrint,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                }
+                              },
+                              itemBuilder: (v) => [
+                                PopupMenuItem(
+                                  value: 0,
+                                  child: ListTile(
+                                    leading: Icon(Icons.delete),
+                                    title: Text("Delete"),
+                                  ),
                                 ),
-                              ),
-                            ],
+                                PopupMenuItem(
+                                  value: 1,
+                                  child: ListTile(
+                                    leading: Icon(Icons.print),
+                                    title: Text("View"),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -347,6 +411,28 @@ class AdminSettings extends StatefulWidget {
 }
 
 class _AdminSettingsState extends State<AdminSettings> {
+  TextEditingController ketuaBKMTextController = TextEditingController();
+  TextEditingController ketuaAmilTextController = TextEditingController();
+  TextEditingController sekretarisTextController = TextEditingController();
+
+  List<PaintingPoint?> paintingPointsKetuaBKM = [];
+  List<PaintingPoint?> paintingPointsKetuaAmil = [];
+  List<PaintingPoint?> paintingPointsSekretaris = [];
+  final Size canvasSize = Size(600, 450);
+
+  @override
+  void initState() {
+    super.initState();
+    if (authorityData.isNotEmpty) {
+      ketuaBKMTextController.text =
+          authorityData.getAt(0)?.ketuaBKM ?? "Ketua BKM";
+      ketuaAmilTextController.text =
+          authorityData.getAt(0)?.ketuaAmil ?? "Ketua Amil";
+      sekretarisTextController.text =
+          authorityData.getAt(0)?.sekretaris ?? "Sekretaris";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -371,9 +457,43 @@ class _AdminSettingsState extends State<AdminSettings> {
               ),
             ),
             TableRow(
-              children: tableTextFieldItem(
-                ["Ketua BKM", "Ketua 'Amil", "Sekretaris"],
-              ),
+              children: [
+                TableRowChild(
+                    placeholder: "Ketua BKM",
+                    controller: ketuaBKMTextController),
+                TableRowChild(
+                    placeholder: "Ketua 'Amil",
+                    controller: ketuaAmilTextController),
+                TableRowChild(
+                    placeholder: "Sekretaris",
+                    controller: sekretarisTextController),
+              ],
+            ),
+            TableRow(
+              children: [
+                Center(
+                  child: SizedBox(
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    child: signatureArea("ketuaBKM", paintingPointsKetuaBKM),
+                  ),
+                ),
+                Center(
+                  child: SizedBox(
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    child: signatureArea("ketuaAmil", paintingPointsKetuaAmil),
+                  ),
+                ),
+                Center(
+                  child: SizedBox(
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    child:
+                        signatureArea("sekretaris", paintingPointsSekretaris),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -382,7 +502,44 @@ class _AdminSettingsState extends State<AdminSettings> {
           child: Padding(
             padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
             child: FilledButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Data Telah Disimpan"),
+                  ),
+                );
+
+                if (authorityData.isNotEmpty) {
+                  await authorityData.clear();
+                }
+
+                var savePath = "${Directory.current.path}/Signatures/";
+                var ketuaBKMSignDir = "$savePath/ketuaBKMSign.png";
+                var ketuaAmilSignDir = "$savePath/ketuaAmilSign.png";
+                var sekretarisSignDir = "$savePath/sekretarisSign.png";
+                await saveToFile(
+                    paintingPoints: paintingPointsKetuaBKM,
+                    customPath: ketuaBKMSignDir);
+                await saveToFile(
+                    paintingPoints: paintingPointsKetuaAmil,
+                    customPath: ketuaAmilSignDir);
+                await saveToFile(
+                    paintingPoints: paintingPointsSekretaris,
+                    customPath: sekretarisSignDir);
+
+                var newAuthorityData = AuthorityData();
+                newAuthorityData.ketuaBKM = ketuaBKMTextController.text;
+                newAuthorityData.ketuaAmil = ketuaAmilTextController.text;
+                newAuthorityData.sekretaris = sekretarisTextController.text;
+                newAuthorityData.ketuaBKMSign = ketuaBKMSignDir;
+                newAuthorityData.ketuaAmilSign = ketuaAmilSignDir;
+                newAuthorityData.sekretarisSign = sekretarisSignDir;
+                await authorityData.add(newAuthorityData);
+
+                setState(
+                  () {},
+                );
+              },
               label: Text("Simpan"),
               icon: Icon(Icons.save),
             ),
@@ -398,10 +555,113 @@ class _AdminSettingsState extends State<AdminSettings> {
     });
   }
 
-  List<Widget> tableTextFieldItem(List<String> placeholders) {
+  List<Widget> tableTextFieldItem(
+      List<String> placeholders, TextEditingController controller) {
     return List.generate(placeholders.length, (index) {
-      return TableRowChild(placeholder: placeholders[index]);
+      return TableRowChild(
+        placeholder: placeholders[index],
+        controller: controller,
+      );
     });
+  }
+
+  Widget signatureArea(String id, List<PaintingPoint?> paintingPoints) {
+    return SizedBox(
+      height: canvasSize.height,
+      width: canvasSize.width,
+      child: GestureDetector(
+        onPanStart: (details) {
+          setState(() {
+            final RenderBox renderBox = context.findRenderObject() as RenderBox;
+            final localPosition =
+                renderBox.globalToLocal(details.globalPosition);
+            if (localPosition.dx >= 0 &&
+                localPosition.dx <= renderBox.size.width &&
+                localPosition.dy >= 0 &&
+                localPosition.dy <= renderBox.size.height) {
+              paintingPoints.add(
+                PaintingPoint(
+                  offset: details.localPosition,
+                  paint: Paint()
+                    ..color = Colors.black
+                    ..isAntiAlias = true
+                    ..strokeWidth = 5
+                    ..strokeCap = StrokeCap.round,
+                ),
+              );
+            }
+          });
+        },
+        onPanUpdate: (details) {
+          setState(() {
+            paintingPoints.add(
+              PaintingPoint(
+                offset: details.localPosition,
+                paint: Paint()
+                  ..color = Colors.black
+                  ..isAntiAlias = true
+                  ..strokeWidth = 5
+                  ..strokeCap = StrokeCap.round,
+              ),
+            );
+          });
+        },
+        onPanEnd: (details) {
+          setState(() {
+            paintingPoints.add(null);
+          });
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black45),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: RepaintBoundary(
+            child: CustomPaint(
+              size: canvasSize,
+              painter: SignaturePainter(paintingPoints: paintingPoints),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> saveToFile(
+      {required List<PaintingPoint?> paintingPoints,
+      String customPath = ""}) async {
+    if (customPath.isEmpty) {
+      customPath = "${Directory.systemTemp.path}/image.png";
+    }
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    final size = canvasSize;
+    final painter = SignaturePainter(paintingPoints: paintingPoints);
+    painter.paint(canvas, size);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(size.width.toInt(), size.height.toInt());
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    if (byteData != null) {
+      final buffer = byteData.buffer.asUint8List();
+      final filePath = customPath;
+      await File(filePath).writeAsBytes(buffer);
+      // log("File saved at: $filePath");
+    }
+  }
+
+  Future<void> openFileExplorer(List<PaintingPoint?> paintingPoints) async {
+    String? outputFile = await FilePicker.platform.saveFile(
+      dialogTitle: 'Please select an output file:',
+      fileName: 'sign.png',
+    );
+
+    if (outputFile != null) {
+      await saveToFile(paintingPoints: paintingPoints, customPath: outputFile);
+    }
   }
 }
 
@@ -427,15 +687,18 @@ class TableHeader extends StatelessWidget {
 }
 
 class TableRowChild extends StatelessWidget {
-  const TableRowChild({super.key, required this.placeholder});
+  const TableRowChild(
+      {super.key, required this.placeholder, required this.controller});
 
   final String placeholder;
+  final TextEditingController controller;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(10, 5, 10, 5),
       child: TextField(
+        controller: controller,
         decoration: InputDecoration(
           hintText: placeholder,
         ),
@@ -453,11 +716,11 @@ class TableRowTextChild extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
         child: Padding(
-      padding: EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.symmetric(vertical: 5),
       child: Text(
         title,
         style: GoogleFonts.rubik(
-          fontSize: 13,
+          fontSize: 18,
         ),
       ),
     ));

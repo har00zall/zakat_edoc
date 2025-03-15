@@ -2,8 +2,6 @@ import 'package:hive/hive.dart';
 
 part 'authority_data.g.dart';
 
-enum ZakatType { uang, beras }
-
 @HiveType(typeId: 3)
 class AuthorityData {
   @HiveField(0)
@@ -14,4 +12,13 @@ class AuthorityData {
 
   @HiveField(2)
   late String sekretaris;
+
+  @HiveField(3)
+  late String ketuaBKMSign;
+
+  @HiveField(4)
+  late String ketuaAmilSign;
+
+  @HiveField(5)
+  late String sekretarisSign;
 }
