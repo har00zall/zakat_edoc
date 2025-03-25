@@ -189,13 +189,13 @@ class _PrintingState extends State<Printing> {
                       child: pw.Text(
                           "${muzakkiData.zakatType == ZakatType.uang ? 'Rp.' : ''} ${NumberFormat('#,##0.00').format(zakatAmount)} ${muzakkiData.zakatType == ZakatType.beras ? 'Kg' : ''}"),
                     ),
-                    pw.Expanded(
-                      flex: 2,
-                      child: pw.OverflowBox(
-                        maxHeight: 25,
-                        child: pw.Image(groupSign),
-                      ),
-                    ),
+                    // pw.Expanded(
+                    //   flex: 2,
+                    //   child: pw.OverflowBox(
+                    //     maxHeight: 25,
+                    //     child: pw.Image(groupSign),
+                    //   ),
+                    // ),
                   ],
                 );
               },
@@ -252,14 +252,16 @@ class _PrintingState extends State<Printing> {
             children: [
               pw.Column(
                 children: [
-                  pw.Text("Ketua BKM,"),
+                  pw.Text("Muzakki,"),
                   pw.SizedBox(
                     height: 50,
-                    child: pw.Image(ketuaBKMSign),
+                    child: pw.Image(groupSign), // pw.Image(ketuaBKMSign),
                   ),
-                  pw.Text(authorityData.isEmpty
-                      ? "_____________"
-                      : authorityData.getAt(0)?.ketuaBKM ?? "_____________")
+                  pw.Text(widget.muzakkiData[0].name
+                      // authorityData.isEmpty
+                      //   ? "_____________"
+                      //   : authorityData.getAt(0)?.ketuaBKM ?? "_____________"
+                      ),
                 ],
               ),
               pw.Column(

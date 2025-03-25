@@ -205,13 +205,13 @@ class _AddMuzakkiState extends State<AddMuzakki> {
               SizedBox(
                 height: canvasSize.height,
                 width: canvasSize.width,
-                child: GestureDetector(
-                  onPanStart: (details) {
+                child: Listener(
+                  onPointerDown: (details) {
                     setState(() {
                       final RenderBox renderBox =
                           context.findRenderObject() as RenderBox;
                       final localPosition =
-                          renderBox.globalToLocal(details.globalPosition);
+                          renderBox.globalToLocal(details.position);
                       if (localPosition.dx >= 0 &&
                           localPosition.dx <= renderBox.size.width &&
                           localPosition.dy >= 0 &&
@@ -229,7 +229,7 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                       }
                     });
                   },
-                  onPanUpdate: (details) {
+                  onPointerMove: (details) {
                     setState(() {
                       paintingPoints.add(
                         PaintingPoint(
@@ -243,7 +243,7 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                       );
                     });
                   },
-                  onPanEnd: (details) {
+                  onPointerUp: (details) {
                     setState(() {
                       paintingPoints.add(null);
                     });
