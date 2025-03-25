@@ -132,8 +132,6 @@ class _PrintingState extends State<Printing> {
             "${Directory.current.path}/Signatures/${widget.muzakkiData[0].group}.png")
         .readAsBytesSync());
 
-    final ketuaBKMSign = pw.MemoryImage(
-        File(authorityData.getAt(0)!.ketuaBKMSign).readAsBytesSync());
     final ketuaAmilSign = pw.MemoryImage(
         File(authorityData.getAt(0)!.ketuaAmilSign).readAsBytesSync());
     final sekretarisSign = pw.MemoryImage(

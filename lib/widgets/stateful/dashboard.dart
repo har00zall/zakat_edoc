@@ -183,23 +183,21 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ],
         ),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(top: 15),
-            child: SizedBox(
-              height: 35,
-              child: FilledButton.icon(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => addMuzakki),
-                  );
-                },
-                label: Text("Tambahkan Muzakki"),
-                icon: Icon(Icons.add),
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.blue[400],
-                ),
+        Padding(
+          padding: EdgeInsets.only(top: 15),
+          child: SizedBox(
+            height: 35,
+            child: FilledButton.icon(
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => addMuzakki),
+                );
+              },
+              label: Text("Tambahkan Muzakki"),
+              icon: Icon(Icons.add),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.blue[400],
               ),
             ),
           ),
