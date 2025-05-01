@@ -143,15 +143,19 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
+  int baseIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     // print("Route name: ${ModalRoute.of(context)?.settings.name}");
     double totalZakatUang = 0;
     double totalZakatBeras = 0;
     int totalMuzakki = muzakkiData.length;
+    int listLength = totalMuzakki - baseIndex;
+    print(listLength);
 
     for (var muzakki in muzakkiData.values) {
-      double amount = double.parse(muzakki.amount);
+      double amount = double.tryParse(muzakki.amount) ?? 0;
 
       if (muzakki.zakatType == ZakatType.beras) {
         totalZakatBeras += amount;
@@ -183,21 +187,23 @@ class _HomeDashboardState extends State<HomeDashboard> {
             ),
           ],
         ),
-        Padding(
-          padding: EdgeInsets.only(top: 15),
-          child: SizedBox(
-            height: 35,
-            child: FilledButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => addMuzakki),
-                );
-              },
-              label: Text("Tambahkan Muzakki"),
-              icon: Icon(Icons.add),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.blue[400],
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(top: 15),
+            child: SizedBox(
+              height: 50,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => addMuzakki),
+                  );
+                },
+                label: Text("Tambahkan Muzakki"),
+                icon: Icon(Icons.add),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.blue[400],
+                ),
               ),
             ),
           ),
@@ -213,6 +219,26 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 setState(() {});
               },
               icon: Icon(Icons.replay_outlined),
+            ),
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  if (baseIndex - 40 < 0) {
+                    baseIndex = 0;
+                  } else {
+                    baseIndex -= 40;
+                  }
+                });
+              },
+              icon: Icon(Icons.skip_previous),
+            ),
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  baseIndex += 40;
+                });
+              },
+              icon: Icon(Icons.skip_next),
             ),
             PopupMenuButton(
               onSelected: (value) {
@@ -274,37 +300,41 @@ class _HomeDashboardState extends State<HomeDashboard> {
             //defaultColumnWidth: FlexColumnWidth(1),
             children: [
               ...List.generate(
-                muzakkiData.length,
+                listLength,
                 (index) {
+                  var localIndex = baseIndex + index;
                   double zakatAmount =
-                      double.parse(muzakkiData.getAt(index)!.amount);
+                      double.tryParse(muzakkiData.getAt(localIndex)!.amount) ??
+                          0;
                   return Container(
                     decoration: BoxDecoration(
-                        color:
-                            index % 2 == 0 ? Colors.white : Colors.grey[200]),
+                        color: localIndex % 2 == 0
+                            ? Colors.white
+                            : Colors.grey[200]),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         Expanded(
                             flex: 1,
                             child: TableRowTextChild(
-                                title: (index + 1).toString())),
+                                title: (localIndex + 1).toString())),
                         Expanded(
                             flex: 5,
                             child: TableRowTextChild(
-                                title: muzakkiData.getAt(index)!.name)),
+                                title: muzakkiData.getAt(localIndex)!.name)),
                         Expanded(
                             flex: 3,
                             child: TableRowTextChild(
-                                title: muzakkiData.getAt(index)!.zakatType ==
-                                        ZakatType.uang
-                                    ? "Uang"
-                                    : "Beras")),
+                                title:
+                                    muzakkiData.getAt(localIndex)!.zakatType ==
+                                            ZakatType.uang
+                                        ? "Uang"
+                                        : "Beras")),
                         Expanded(
                             flex: 3,
                             child: TableRowTextChild(
                               title:
-                                  "${muzakkiData.getAt(index)!.zakatType == ZakatType.uang ? "Rp." : ""} ${NumberFormat('#,##0.00').format(zakatAmount)} ${muzakkiData.getAt(index)!.zakatType == ZakatType.beras ? "(Kg)" : ""}",
+                                  "${muzakkiData.getAt(localIndex)!.zakatType == ZakatType.uang ? "Rp." : ""} ${NumberFormat('#,##0.00').format(zakatAmount)} ${muzakkiData.getAt(localIndex)!.zakatType == ZakatType.beras ? "(Kg)" : ""}",
                             )),
                         Expanded(
                           flex: 1,
@@ -331,7 +361,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
                                             onPressed: () async {
                                               Navigator.pop(context);
 
-                                              await muzakkiData.deleteAt(index);
+                                              await muzakkiData
+                                                  .deleteAt(localIndex);
 
                                               setState(() {});
                                             },
@@ -347,7 +378,8 @@ class _HomeDashboardState extends State<HomeDashboard> {
                                     },
                                   );
                                 } else if (value == 1) {
-                                  var groupID = muzakkiData.getAt(index)?.group;
+                                  var groupID =
+                                      muzakkiData.getAt(localIndex)?.group;
                                   List<MuzakkiInputData> muzakkiDataToPrint =
                                       [];
 
