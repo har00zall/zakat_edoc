@@ -1,4 +1,4 @@
-import 'package:dargon2_flutter/dargon2_flutter.dart';
+// import 'package:dargon2_flutter/dargon2_flutter.dart';
 import 'package:zakat_edoc/database/user_data.dart';
 import 'package:zakat_edoc/data_route.dart';
 import 'package:zakat_edoc/helpers/session_helper.dart';
@@ -23,7 +23,13 @@ class LoginHelper {
           responseMessage: "Username is not found");
     }
 
-    if (!(await passwordVerified(password, retrievedUserData.password))) {
+    // if (!(await passwordVerified(password, retrievedUserData.password))) {
+    //   return const LoginResponse(
+    //       responseCode: LoginResponseCode.error,
+    //       responseMessage: "Wrong Password");
+    // }
+
+    if (password != retrievedUserData.password) {
       return const LoginResponse(
           responseCode: LoginResponseCode.error,
           responseMessage: "Wrong Password");
@@ -36,18 +42,18 @@ class LoginHelper {
         responseMessage: "Succesfully Logged in");
   }
 
-  static Future<bool> passwordVerified(
-      String enteredPassword, String hashedPassword) async {
-    try {
-      return await argon2.verifyHashString(enteredPassword, hashedPassword);
-    } catch (e) {
-      if (e == DArgon2ErrorCode.ARGON2_VERIFY_MISMATCH) {
-        return false;
-      }
-    }
+  // static Future<bool> passwordVerified(
+  //     String enteredPassword, String hashedPassword) async {
+  //   try {
+  //     return await argon2.verifyHashString(enteredPassword, hashedPassword);
+  //   } catch (e) {
+  //     if (e == DArgon2ErrorCode.ARGON2_VERIFY_MISMATCH) {
+  //       return false;
+  //     }
+  //   }
 
-    return false;
-  }
+  //   return false;
+  // }
 
   static UserData? getUserWithUsername(String username) {
     for (var userData in userDB.values) {

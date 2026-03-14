@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:dargon2_flutter/dargon2_flutter.dart';
+// import 'package:dargon2_flutter/dargon2_flutter.dart';
 import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:zakat_edoc/database/authority_data.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:zakat_edoc/database/user_data.dart';
@@ -20,9 +21,10 @@ late Box<MuzakkiInputData> muzakkiData;
 Future<void> initHive() async {
   // init hivebox
   // init user db
-  var path = Directory.current.path;
+  // var path = Directory.current.path;
+  await Hive.initFlutter();
   Hive
-    ..init(path)
+    // ..init(path)
     ..registerAdapter(UserDataAdapter())
     ..registerAdapter(UserSessionAdapter())
     ..registerAdapter(AuthorityDataAdapter())
@@ -35,14 +37,11 @@ Future<void> initHive() async {
   muzakkiData = await Hive.openBox(muzakkiInputDataFileName);
 
   if (userDB.isEmpty) {
-    final hashedDefaultPassword =
-        await argon2.hashPasswordString("admin", salt: Salt.newSalt());
+    // final hashedDefaultPassword =
+    //     await argon2.hashPasswordString("admin", salt: Salt.newSalt());
     userDB.add(
       UserData(
-          id: 0,
-          username: "admin",
-          password: hashedDefaultPassword.encodedString,
-          displayName: "Admin"),
+          id: 0, username: "admin", password: "admin", displayName: "Admin"),
     );
   }
 }

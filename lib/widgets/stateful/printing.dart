@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:zakat_edoc/data_route.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:path/path.dart' as p;
 
 class Printing extends StatefulWidget {
   const Printing({super.key, required this.muzakkiData});
@@ -52,12 +54,21 @@ class _PrintingState extends State<Printing> {
       PdfPageFormat format, List<MuzakkiInputData> muzakkiData) async {
     final pdf = pw.Document(version: PdfVersion.pdf_1_5, compress: true);
 
+    final pathToSignature = await getSignatureFile(widget.muzakkiData[0].group);
+    final groupSign = pw.MemoryImage(File(pathToSignature).readAsBytesSync());
+
+    final authority = authorityData.getAt(0);
+    final ketuaAmilSign =
+        pw.MemoryImage(File(authority!.ketuaAmilSign).readAsBytesSync());
+    final sekretarisSign =
+        pw.MemoryImage(File(authority.sekretarisSign).readAsBytesSync());
+
     var duplicateData = pw.Column(
       mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
       children: [
         pw.Padding(
           padding: pw.EdgeInsets.fromLTRB(20, 5, 20, 5),
-          child: receipt(),
+          child: receipt(groupSign, ketuaAmilSign, sekretarisSign),
         ),
         pw.Text(
           "*Bagian ini disimpan oleh panitia",
@@ -76,7 +87,7 @@ class _PrintingState extends State<Printing> {
           children: [
             pw.Padding(
               padding: pw.EdgeInsets.fromLTRB(20, 5, 20, 5),
-              child: receipt(),
+              child: receipt(groupSign, ketuaAmilSign, sekretarisSign),
             ),
             pw.SizedBox(
               height: 5,
@@ -114,7 +125,8 @@ class _PrintingState extends State<Printing> {
     return pdf.save();
   }
 
-  pw.Container receipt() {
+  pw.Container receipt(pw.MemoryImage groupSignParam,
+      pw.MemoryImage ketuaAmilSignParam, pw.MemoryImage sekretarisSignParam) {
     double totalRP = 0;
     double totalKg = 0;
 
@@ -128,14 +140,12 @@ class _PrintingState extends State<Printing> {
       }
     }
 
-    final groupSign = pw.MemoryImage(File(
-            "${Directory.current.path}/Signatures/${widget.muzakkiData[0].group}.png")
-        .readAsBytesSync());
+    final groupSign = groupSignParam;
+    // "${Directory.current.path}/Signatures/${widget.muzakkiData[0].group}.png")
+    //.readAsBytesSync();
 
-    final ketuaAmilSign = pw.MemoryImage(
-        File(authorityData.getAt(0)!.ketuaAmilSign).readAsBytesSync());
-    final sekretarisSign = pw.MemoryImage(
-        File(authorityData.getAt(0)!.sekretarisSign).readAsBytesSync());
+    final ketuaAmilSign = ketuaAmilSignParam;
+    final sekretarisSign = sekretarisSignParam;
 
     return pw.Container(
       decoration: pw.BoxDecoration(
@@ -291,5 +301,23 @@ class _PrintingState extends State<Printing> {
         ],
       ),
     );
+  }
+
+  Future<String> getSignatureFile(String groupName) async {
+    // 1. Get the correct directory for Android/iOS
+    final directory = await getApplicationDocumentsDirectory();
+
+    // 2. Create a sub-folder if it doesn't exist
+    final folderPath = Directory('${directory.path}/Signatures');
+    if (!folderPath.existsSync()) {
+      await folderPath.create(recursive: true);
+    }
+
+    // 3. Construct the full path cleanly
+    // Result: /data/user/0/com.example.app/app_flutter/Signatures/YourGroupName.png
+    final filePath = p.join(folderPath.path, '$groupName.png');
+    //print(filePath);
+    return filePath;
+    //return File(filePath);
   }
 }

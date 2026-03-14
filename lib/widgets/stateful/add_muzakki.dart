@@ -4,10 +4,12 @@ import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:zakat_edoc/data_route.dart';
 import 'package:zakat_edoc/database/muzakki_input_data.dart';
 import 'package:zakat_edoc/helpers/signature_painter.dart';
 import 'package:zakat_edoc/widgets/stateful/printing.dart';
+import 'package:path/path.dart' as p;
 
 class MuzakkiInputController {
   const MuzakkiInputController({
@@ -205,17 +207,35 @@ class _AddMuzakkiState extends State<AddMuzakki> {
               SizedBox(
                 height: canvasSize.height,
                 width: canvasSize.width,
-                child: Listener(
-                  onPointerDown: (details) {
-                    setState(() {
-                      final RenderBox renderBox =
-                          context.findRenderObject() as RenderBox;
-                      final localPosition =
-                          renderBox.globalToLocal(details.position);
-                      if (localPosition.dx >= 0 &&
-                          localPosition.dx <= renderBox.size.width &&
-                          localPosition.dy >= 0 &&
-                          localPosition.dy <= renderBox.size.height) {
+                child: GestureDetector(
+                  onVerticalDragUpdate: (_) {},
+                  onHorizontalDragUpdate: (_) {},
+                  child: Listener(
+                    onPointerDown: (details) {
+                      setState(() {
+                        final RenderBox renderBox =
+                            context.findRenderObject() as RenderBox;
+                        final localPosition =
+                            renderBox.globalToLocal(details.position);
+                        if (localPosition.dx >= 0 &&
+                            localPosition.dx <= renderBox.size.width &&
+                            localPosition.dy >= 0 &&
+                            localPosition.dy <= renderBox.size.height) {
+                          paintingPoints.add(
+                            PaintingPoint(
+                              offset: details.localPosition,
+                              paint: Paint()
+                                ..color = Colors.black
+                                ..isAntiAlias = true
+                                ..strokeWidth = 5
+                                ..strokeCap = StrokeCap.round,
+                            ),
+                          );
+                        }
+                      });
+                    },
+                    onPointerMove: (details) {
+                      setState(() {
                         paintingPoints.add(
                           PaintingPoint(
                             offset: details.localPosition,
@@ -226,38 +246,24 @@ class _AddMuzakkiState extends State<AddMuzakki> {
                               ..strokeCap = StrokeCap.round,
                           ),
                         );
-                      }
-                    });
-                  },
-                  onPointerMove: (details) {
-                    setState(() {
-                      paintingPoints.add(
-                        PaintingPoint(
-                          offset: details.localPosition,
-                          paint: Paint()
-                            ..color = Colors.black
-                            ..isAntiAlias = true
-                            ..strokeWidth = 5
-                            ..strokeCap = StrokeCap.round,
+                      });
+                    },
+                    onPointerUp: (details) {
+                      setState(() {
+                        paintingPoints.add(null);
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black45),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          size: canvasSize,
+                          painter:
+                              SignaturePainter(paintingPoints: paintingPoints),
                         ),
-                      );
-                    });
-                  },
-                  onPointerUp: (details) {
-                    setState(() {
-                      paintingPoints.add(null);
-                    });
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black45),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: RepaintBoundary(
-                      child: CustomPaint(
-                        size: canvasSize,
-                        painter:
-                            SignaturePainter(paintingPoints: paintingPoints),
                       ),
                     ),
                   ),
@@ -316,9 +322,28 @@ class _AddMuzakkiState extends State<AddMuzakki> {
         (_) => characters.codeUnitAt(random.nextInt(characters.length))));
   }
 
+  Future<String> getSignatureFile(String groupName) async {
+    // 1. Get the correct directory for Android/iOS
+    final directory = await getApplicationDocumentsDirectory();
+
+    // 2. Create a sub-folder if it doesn't exist
+    final folderPath = Directory('${directory.path}/Signatures');
+    if (!await folderPath.exists()) {
+      await folderPath.create(recursive: true);
+    }
+
+    // 3. Construct the full path cleanly
+    // Result: /data/user/0/com.example.app/app_flutter/Signatures/YourGroupName.png
+    final filePath = p.join(folderPath.path, '$groupName.png');
+    //print(filePath);
+    return filePath;
+    //return File(filePath);
+  }
+
   Future<void> saveAndPrintReceipt() async {
-    await saveToFile(
-        customPath: "${Directory.current.path}/Signatures//$groupName.png");
+    String signatureFilePath = await getSignatureFile(groupName);
+    await saveToFile(customPath: signatureFilePath);
+    // customPath: "${Directory.current.path}/Signatures//$groupName.png");
 
     List<MuzakkiInputData> muzakkiInputData = [];
     for (int i = 0; i < muzakkiEntry.length; i++) {
@@ -379,14 +404,52 @@ class _AddMuzakkiState extends State<AddMuzakki> {
   }
 
   Future<void> saveToFile({String customPath = ""}) async {
-    if (customPath.isEmpty) {
-      customPath = "${Directory.systemTemp.path}/image.png";
+    // if (customPath.isEmpty) {
+    //   customPath = "${Directory.systemTemp.path}/image.png";
+    // }
+
+    // final recorder = ui.PictureRecorder();
+    // final canvas = Canvas(recorder);
+
+    // final size = canvasSize;
+    // final painter = SignaturePainter(paintingPoints: paintingPoints);
+    // painter.paint(canvas, size);
+
+    // final picture = recorder.endRecording();
+    // final img = await picture.toImage(size.width.toInt(), size.height.toInt());
+    // final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    // if (byteData != null) {
+    //   final buffer = byteData.buffer.asUint8List();
+    //   final filePath = customPath;
+    //   await File(filePath).writeAsBytes(buffer);
+    // }
+
+    String filePath = customPath;
+
+    // 1. Handle default path if none provided
+    if (filePath.isEmpty) {
+      // Better to use getApplicationDocumentsDirectory() for permanent files
+      final directory = await getTemporaryDirectory();
+      filePath = "${directory.path}/image.png";
     }
 
+    // 2. CRITICAL: Ensure the directory exists
+    final file = File(filePath);
+    final directoryPath =
+        file.parent.path; // Gets the folder containing the file
+    final directory = Directory(directoryPath);
+
+    if (!await directory.exists()) {
+      await directory.create(
+          recursive: true); // This creates the 'Signatures' folder
+    }
+
+    // --- Your Drawing Logic (This part looks good!) ---
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-
     final size = canvasSize;
+
     final painter = SignaturePainter(paintingPoints: paintingPoints);
     painter.paint(canvas, size);
 
@@ -396,8 +459,9 @@ class _AddMuzakkiState extends State<AddMuzakki> {
 
     if (byteData != null) {
       final buffer = byteData.buffer.asUint8List();
-      final filePath = customPath;
-      await File(filePath).writeAsBytes(buffer);
+      // 3. Now this will work because the folder exists
+      await file.writeAsBytes(buffer);
+      // print("Saved successfully to: $filePath");
     }
   }
 
